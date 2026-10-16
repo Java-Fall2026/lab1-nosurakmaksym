@@ -8,9 +8,13 @@ import ua.rental.util.RentalUtils;
 
 import java.time.LocalDate;
 
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+
 public class Main {
 
     public static void main(String[] args) {
+        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
         System.out.println("1. Створення об'єктів конструктором та фабричним методом");
         Landlord landlord = new Landlord("  1234567890 ", "іван петренко", "+380501234567");
         Property property = Property.of(
