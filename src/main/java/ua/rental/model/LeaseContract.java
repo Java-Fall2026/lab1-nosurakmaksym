@@ -14,7 +14,7 @@ public class LeaseContract extends BaseEntity {
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final double depositAmount;
-    private String status;
+    private ContractStatus status;
 
     public LeaseContract(
             String contractNumber,
@@ -23,7 +23,7 @@ public class LeaseContract extends BaseEntity {
             LocalDate startDate,
             LocalDate endDate,
             double depositAmount,
-            String status
+            ContractStatus status
     ) {
         super();
         this.contractNumber = RentalUtils.requireValidCode(contractNumber, "Contract number");
@@ -38,45 +38,17 @@ public class LeaseContract extends BaseEntity {
         setStatus(status);
     }
 
-    public final void setStatus(String status) {
-        this.status = RentalUtils.validateContractStatus(status);
+    public final void setStatus(ContractStatus status) {
+        this.status = RentalUtils.requireNotNull(status, "Contract status");
     }
 
-    public long calculateContractMonths() {
-        return RentalUtils.contractMonths(this);
-    }
-
-    public double calculateTotalRent() {
-        return RentalUtils.totalRent(this);
-    }
-
-    public String getContractNumber() {
-        return contractNumber;
-    }
-
-    public Property getProperty() {
-        return property;
-    }
-
-    public String getTenantName() {
-        return tenantName;
-    }
-
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public double getDepositAmount() {
-        return depositAmount;
-    }
-
-    public String getStatus() {
-        return status;
-    }
+    public String getContractNumber() { return contractNumber; }
+    public Property getProperty() { return property; }
+    public String getTenantName() { return tenantName; }
+    public LocalDate getStartDate() { return startDate; }
+    public LocalDate getEndDate() { return endDate; }
+    public double getDepositAmount() { return depositAmount; }
+    public ContractStatus getStatus() { return status; }
 
     @Override
     public boolean equals(Object o) {
@@ -100,7 +72,7 @@ public class LeaseContract extends BaseEntity {
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", depositAmount=" + RentalUtils.formatMoney(depositAmount) +
-                ", status='" + status + '\'' +
+                ", status=" + status +
                 ", createdAt=" + createdAt +
                 '}';
     }
