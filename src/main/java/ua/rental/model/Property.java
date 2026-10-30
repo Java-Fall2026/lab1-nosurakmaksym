@@ -10,19 +10,19 @@ public class Property extends BaseEntity {
     private final String cadastralNumber;
     private final String address;
     private final Landlord landlord;
-    private final String type;
+    private final PropertyType type;
     private double monthlyRent;
 
-    private Property(String cadastralNumber, String address, Landlord landlord, String type, double monthlyRent) {
+    private Property(String cadastralNumber, String address, Landlord landlord, PropertyType type, double monthlyRent) {
         super();
         this.cadastralNumber = RentalUtils.requireValidCode(cadastralNumber, "Cadastral number");
         this.address = RentalUtils.requireValidText(address, "Address");
         this.landlord = RentalUtils.requireNotNull(landlord, "Landlord");
-        this.type = RentalUtils.validatePropertyType(type);
+        this.type = RentalUtils.requireNotNull(type, "Property type");
         setMonthlyRent(monthlyRent);
     }
 
-    public static Property of(String cadastralNumber, String address, Landlord landlord, String type, double monthlyRent) {
+    public static Property of(String cadastralNumber, String address, Landlord landlord, PropertyType type, double monthlyRent) {
         return new Property(cadastralNumber, address, landlord, type, monthlyRent);
     }
 
@@ -30,25 +30,11 @@ public class Property extends BaseEntity {
         this.monthlyRent = RentalUtils.requirePositive(monthlyRent, "Monthly rent");
     }
 
-    public String getCadastralNumber() {
-        return cadastralNumber;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public Landlord getLandlord() {
-        return landlord;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public double getMonthlyRent() {
-        return monthlyRent;
-    }
+    public String getCadastralNumber() { return cadastralNumber; }
+    public String getAddress() { return address; }
+    public Landlord getLandlord() { return landlord; }
+    public PropertyType getType() { return type; }
+    public double getMonthlyRent() { return monthlyRent; }
 
     @Override
     public boolean equals(Object o) {
@@ -68,8 +54,8 @@ public class Property extends BaseEntity {
         return "Property{" +
                 "cadastralNumber='" + cadastralNumber + '\'' +
                 ", address='" + address + '\'' +
-                ", landlord=" + landlord.getFullName() + " (" + landlord.getTaxCode() + ")" +
-                ", type='" + type + '\'' +
+                ", landlord=" + landlord.fullName() + " (" + landlord.taxCode() + ")" +
+                ", type=" + type +
                 ", monthlyRent=" + RentalUtils.formatMoney(monthlyRent) +
                 ", createdAt=" + createdAt +
                 '}';

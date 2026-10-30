@@ -1,8 +1,10 @@
 package ua.rental;
 
+import ua.rental.model.ContractStatus;
 import ua.rental.model.Landlord;
 import ua.rental.model.LeaseContract;
 import ua.rental.model.Property;
+import ua.rental.model.PropertyType;
 import ua.rental.model.RentPayment;
 import ua.rental.util.RentalUtils;
 
@@ -11,111 +13,62 @@ import java.time.LocalDate;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
+
 public class Main {
 
     public static void main(String[] args) {
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
-        System.out.println("1. Створення об'єктів конструктором та фабричним методом");
+        System.out.println("=== 1. Створення record-об'єктів та звернення до їхніх компонентів ===");
         Landlord landlord = new Landlord("  1234567890 ", "іван петренко", "+380501234567");
+        System.out.println("Створено Landlord (Record): " + landlord.fullName() + " (ІПН: " + landlord.taxCode() + ")\n");
+
+        System.out.println("=== 2. Робота з enum (values, власне поле, valueOf з помилкою) ===");
+        System.out.print("Доступні типи нерухомості (enum values): ");
+        for (PropertyType pt : PropertyType.values()) {
+            System.out.print(pt.name() + "[коеф=" + pt.getTaxMultiplier() + "] ");
+        }
+        System.out.println();
+        try {
+            PropertyType.valueOf("CASTLE");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Спроба valueOf(\"CASTLE\") відхилена: " + e.getMessage() + "\n");
+        }
+
+        System.out.println("=== 3. Демонстрація switch-виразів ===");
         Property property = Property.of(
-                "  cad-73-001 ",
+                "CAD-73-001",
                 "м. Чернівці, вул. Університетська, 28",
                 landlord,
-                "  apartment ",
+                PropertyType.COMMERCIAL,
                 15000.0
         );
         LeaseContract contract = new LeaseContract(
-                "  cnt-2026-01 ",
+                "CNT-2026-01",
                 property,
                 "максим коваленко",
                 LocalDate.of(2026, 3, 1),
                 LocalDate.of(2026, 9, 1),
                 15000.0,
-                " active "
+                ContractStatus.TERMINATED
         );
-        RentPayment payment = RentPayment.of(contract, 15000.0, LocalDate.of(2026, 3, 5));
-        System.out.println("Усі об'єкти успішно створено.\n");
+        System.out.println("Switch 1 (переклад статусу): " + contract.getStatus() + " -> " + RentalUtils.translateStatus(contract.getStatus()));
+        System.out.println("Switch 2 (розрахунок податку): для " + property.getType() + " податок = " + RentalUtils.calculateBaseTax(property.getType()) + "\n");
 
-        System.out.println("2. Нормалізація в дії");
-        System.out.println("Вхідний номер договору \"  cnt-2026-01 \" -> \"" + contract.getContractNumber() + "\"");
-        System.out.println("Вхідний тип об'єкта \"  apartment \" -> \"" + property.getType() + "\"");
-        System.out.println("Вхідне ім'я \"іван петренко\" -> \"" + landlord.getFullName() + "\"");
-        System.out.println("Нормалізація email \"  Ivan@MAIL.com \" -> \""
-                + RentalUtils.normalizeLowerCase("  Ivan@MAIL.com ", "Email") + "\"\n");
-
-        System.out.println("3. Три різні порушення правил валідації");
+        System.out.println("=== 4. Record з невалідними даними (компактний конструктор) ===");
         try {
-            Property.of("CAD-002", "вул. Головна, 10", landlord, "HOUSE", -5000.0);
+            new RentPayment(contract, -500.0, LocalDate.of(2026, 3, 5));
         } catch (IllegalArgumentException e) {
-            System.out.println("Помилка 1 (очікувано): " + e.getMessage());
+            System.out.println("Помилка при створенні RentPayment: " + e.getMessage() + "\n");
         }
 
-        try {
-            Property.of("CAD-003", "вул. Головна, 12", landlord, "CASTLE", 10000.0);
-        } catch (IllegalArgumentException e) {
-            System.out.println("Помилка 2 (очікувано): " + e.getMessage());
-        }
+        System.out.println("=== 5. Порівняння двох однакових record (згенеровані equals та hashCode) ===");
+        RentPayment payment1 = new RentPayment(contract, 15000.0, LocalDate.of(2026, 3, 5));
+        RentPayment payment2 = new RentPayment(contract, 15000.0, LocalDate.of(2026, 3, 5));
+        System.out.println("payment1.equals(payment2): " + payment1.equals(payment2));
+        System.out.println("hashCode однакові: " + (payment1.hashCode() == payment2.hashCode()) + "\n");
 
-        try {
-            new LeaseContract(
-                    "CNT-2026-02",
-                    property,
-                    "Олег Бойко",
-                    LocalDate.of(2026, 4, 1),
-                    LocalDate.of(2026, 10, 1),
-                    10000.0,
-                    "ACTIVE"
-            );
-        } catch (IllegalArgumentException e) {
-            System.out.println("Помилка 3 (очікувано): " + e.getMessage());
-        }
-        System.out.println();
-
-        System.out.println("4. Спроба зіпсувати коректний об'єкт через сеттер");
-        try {
-            property.setMonthlyRent(0.0);
-        } catch (IllegalArgumentException e) {
-            System.out.println("Спроба встановити monthlyRent = 0.0 відхилена: " + e.getMessage());
-            System.out.println("Поточна орендна плата залишилась незмінною: " + property.getMonthlyRent());
-        }
-        try {
-            contract.setStatus("PENDING");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Спроба встановити некоректний статус відхилена: " + e.getMessage());
-            System.out.println("Поточний статус договору: " + contract.getStatus());
-        }
-        System.out.println();
-
-        System.out.println("5. Порівняння об'єктів: ==, equals() та hashCode()");
-        RentPayment samePayment = RentPayment.of(contract, 18000.0, LocalDate.of(2026, 3, 5));
-        RentPayment differentPayment = RentPayment.of(contract, 15000.0, LocalDate.of(2026, 4, 5));
-
-        System.out.println("Два платежі з однаковим договором і датою:");
-        System.out.println("payment == samePayment: " + (payment == samePayment));
-        System.out.println("payment.equals(samePayment): " + payment.equals(samePayment));
-        System.out.println("payment.hashCode() == samePayment.hashCode(): "
-                + (payment.hashCode() == samePayment.hashCode()));
-        System.out.println("Порівняння з платежем за іншу дату:");
-        System.out.println("payment.equals(differentPayment): " + payment.equals(differentPayment) + "\n");
-
-        System.out.println("6. Виклик обчислюваних методів");
-        long months = RentalUtils.contractMonths(contract);
-        double total = RentalUtils.totalRent(contract);
-        System.out.println("Тривалість договору " + contract.getContractNumber() + ": " + months + " міс.");
-        System.out.println("Загальна вартість оренди за договором: " + RentalUtils.formatMoney(total) + "\n");
-
-        System.out.println("7. Вивід усіх сутностей через toString()");
+        System.out.println("=== 6. Вивід record через згенерований toString() ===");
         System.out.println(landlord);
-        System.out.println(property);
-        System.out.println(contract);
-        System.out.println(payment);
-
-        //8. Демонстрація обмеження доступу
-        // ua.rental.util.ValidationHelper.requirePositive(100.0, "Amount");
-        // Why it does not compile: ValidationHelper has package-private visibility in package ua.rental.util,
-        // so it cannot be accessed from class Main located in package ua.rental.
-
-        // Property directProperty = new Property("CAD-999", "Address", landlord, "GARAGE", 2000.0);
-        // Why it does not compile: Property constructor is declared private to enforce creation via Property.of(...).
+        System.out.println(payment1);
     }
 }

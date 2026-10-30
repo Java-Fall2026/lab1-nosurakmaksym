@@ -1,6 +1,8 @@
 package ua.rental.util;
 
+import ua.rental.model.ContractStatus;
 import ua.rental.model.LeaseContract;
+import ua.rental.model.PropertyType;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -39,28 +41,8 @@ public final class RentalUtils {
         return ValidationHelper.requirePositive(value, fieldName);
     }
 
-    public static double requireInRange(double value, double min, double max, String fieldName) {
-        return ValidationHelper.requireInRange(value, min, max, fieldName);
-    }
-
     public static double requireAtLeast(double value, double min, String fieldName) {
         return ValidationHelper.requireAtLeast(value, min, fieldName);
-    }
-
-    public static String validatePropertyType(String type) {
-        ValidationHelper.requireNotBlank(type, "Property type");
-        String normalized = FormatHelper.normalize(type, true);
-        return ValidationHelper.requireAllowedValue(
-                normalized, ValidationHelper.ALLOWED_PROPERTY_TYPES, "Property type"
-        );
-    }
-
-    public static String validateContractStatus(String status) {
-        ValidationHelper.requireNotBlank(status, "Contract status");
-        String normalized = FormatHelper.normalize(status, true);
-        return ValidationHelper.requireAllowedValue(
-                normalized, ValidationHelper.ALLOWED_CONTRACT_STATUSES, "Contract status"
-        );
     }
 
     public static void validateContractDates(LocalDate startDate, LocalDate endDate) {
@@ -77,6 +59,25 @@ public final class RentalUtils {
 
     public static String formatMoney(double amount) {
         return FormatHelper.formatMoney(amount);
+    }
+
+    public static String translateStatus(ContractStatus status) {
+        ValidationHelper.requireNotNull(status, "Contract status");
+        return switch (status) {
+            case ACTIVE -> "Активний";
+            case TERMINATED -> "Розірваний";
+            case EXPIRED -> "Термін дії минув";
+        };
+    }
+
+    public static double calculateBaseTax(PropertyType type) {
+        ValidationHelper.requireNotNull(type, "Property type");
+        double baseRate = 1000.0;
+        return switch (type) {
+            case APARTMENT, HOUSE -> baseRate * type.getTaxMultiplier();
+            case COMMERCIAL -> baseRate * type.getTaxMultiplier() * 1.2;
+            case GARAGE -> 200.0;
+        };
     }
 
     public static long contractMonths(LeaseContract contract) {
